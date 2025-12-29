@@ -2,6 +2,7 @@ const CSV_URL = CONFIG.datasetUrl;
 const TOTAL = CONFIG.totalPerRound;
 
 document.getElementById("siteTitle").innerText = CONFIG.title;
+document.getElementById("siteSubtitle").innerText = CONFIG.subtitle;
 
 let all = [], round = [], idx = 0, score = 0;
 const cache = {};
@@ -48,7 +49,7 @@ function startRound() {
 }
 
 function showFace() {
-  progress.innerText = `Face ${idx+1} of ${TOTAL} • Score ${score}`;
+  progress.innerText = `${CONFIG.itemLabel} ${idx+1} of ${TOTAL} • Score ${score}`;
   guessInput.value = "";
   feedback.innerText = "";
   feedback.className = "";
@@ -110,10 +111,7 @@ function endRound() {
   endScreen.classList.remove("hidden");
   finalScore.innerText = `Your score: ${score} / ${TOTAL*CONFIG.pointsPerCorrect}`;
   headline.innerText =
-    score >= 160 ? "You really know your pop culture." :
-    score >= 120 ? "Solid — but you left points on the table." :
-    score >= 80  ? "You know the faces. The names are harder." :
-                   "Brutal round. Want another shot?";
+    CONFIG.endMessages.find(m => score >= m.min).text;
 }
 
 function shareScore() {
@@ -121,7 +119,7 @@ function shareScore() {
     .replace("{score}", score)
     .replace("{max}", TOTAL * CONFIG.pointsPerCorrect);
 
-  const url = "https://celebrityrecognitiongame.com";
+  const url = CONFIG.shareUrl;
 
   if (navigator.share) {
     navigator.share({
