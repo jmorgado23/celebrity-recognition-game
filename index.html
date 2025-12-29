@@ -2,9 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Celebrity Recognition</title>
 
-<!-- Google Analytics -->
+<!-- PRIMARY SEO -->
+<title>Celebrity Recognition Game – How Many Famous People Can You Name?</title>
+<meta name="description" content="Test how well you recognize famous people. A fun celebrity recognition game with actors, musicians, athletes, and more. One attempt per face.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- CANONICAL -->
+<link rel="canonical" href="https://jmorgado23.github.io/celebrity-recognition/">
+
+<!-- OPEN GRAPH -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Celebrity Recognition Game">
+<meta property="og:description" content="How many famous people can you recognize? Test your pop culture knowledge.">
+<meta property="og:url" content="https://jmorgado23.github.io/celebrity-recognition/">
+<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Portrait_Placeholder.png/512px-Portrait_Placeholder.png">
+
+<!-- TWITTER -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Celebrity Recognition Game">
+<meta name="twitter:description" content="Test how well you recognize famous people. One attempt per face.">
+<meta name="twitter:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Portrait_Placeholder.png/512px-Portrait_Placeholder.png">
+
+<!-- GOOGLE ANALYTICS -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-939SPGF1FN"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -161,18 +181,20 @@ button {
 
 <div class="app">
 
+  <!-- START -->
   <div id="startScreen">
-    <h1>Recognize the Celebrity</h1>
-    <p>You’ll see 20 faces. How many can you name?</p>
+    <h1>Celebrity Recognition Game</h1>
+    <p>Test how well you recognize famous people.</p>
     <button class="primary" onclick="startRound()">Start round</button>
     <p class="small">Exact spelling · One attempt per face</p>
   </div>
 
+  <!-- GAME -->
   <div id="gameScreen" class="hidden">
     <div id="progress"></div>
 
     <div class="image-wrapper">
-      <img id="celebrityImage" alt="">
+      <img id="celebrityImage" alt="Celebrity face">
     </div>
 
     <p id="imageStatus" class="small"></p>
@@ -187,6 +209,7 @@ button {
     <p id="feedback"></p>
   </div>
 
+  <!-- END -->
   <div id="endScreen" class="hidden">
     <h2 id="headline"></h2>
     <p id="finalScore"></p>
@@ -235,7 +258,7 @@ function buildRound() {
 }
 
 function startRound() {
-  gtag('event', 'round_start');
+  gtag('event','round_start');
   round = buildRound(); idx = 0; score = 0;
   startScreen.classList.add("hidden");
   endScreen.classList.add("hidden");
@@ -271,25 +294,23 @@ function loadImage(name) {
 function submitGuess() {
   const g = guessInput.value.trim().toLowerCase();
   const c = round[idx].name.toLowerCase();
-
   if (g === c) {
     score += 10;
     feedback.innerText = "Correct! +10 points";
     feedback.className = "correct";
-    gtag('event', 'submit_correct');
+    gtag('event','submit_correct');
   } else {
     feedback.innerText = `Incorrect. Correct answer: ${round[idx].name}`;
     feedback.className = "incorrect";
-    gtag('event', 'submit_incorrect');
+    gtag('event','submit_incorrect');
   }
-
   setTimeout(nextFace,1200);
 }
 
 function skip() {
   feedback.innerText = `Incorrect. Correct answer: ${round[idx].name}`;
   feedback.className = "incorrect";
-  gtag('event', 'skip_face');
+  gtag('event','skip_face');
   setTimeout(nextFace,1200);
 }
 
@@ -299,7 +320,7 @@ function nextFace() {
 }
 
 function endRound() {
-  gtag('event', 'round_complete', { score: score });
+  gtag('event','round_complete',{ score: score });
   gameScreen.classList.add("hidden");
   endScreen.classList.remove("hidden");
   finalScore.innerText = `Your score: ${score} / ${TOTAL*10}`;
@@ -313,4 +334,3 @@ function endRound() {
 
 </body>
 </html>
-
