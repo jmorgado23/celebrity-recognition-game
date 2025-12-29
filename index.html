@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Celebrity Recognition</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fafafa;
+      text-align: center;
+      padding: 20px;
+    }
+    img {
+      max-width: 90%;
+      max-height: 60vh;
+      margin: 20px 0;
+    }
+    input {
+      font-size: 18px;
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    .small {
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="startScreen">
+  <h1>Recognize the Celebrity</h1>
+  <p>You’ll see 20 faces. Name as many celebrities as you can.</p>
+
+  <ul style="text-align:left; max-width:420px; margin: 0 auto;">
+    <li>One attempt per face</li>
+    <li>Exact spelling required</li>
+    <li>You can skip any face</li>
+    <li>Each correct answer is 10 points</li>
+    <li>The round ends after 20 faces</li>
+  </ul>
+
+  <p class="small">Some will be easy. Some will be tough. That’s the point.</p>
+
+  <button onclick="startRound()">Start round</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="gameScreen" style="display:none;">
+  <div id="progress"></div>
+  <img id="celebrityImage" src="">
+  <br>
+  <input id="guessInput" placeholder="Who is this?" autocomplete="off">
+  <br>
+  <button onclick="submitGuess()">Submit</button>
+  <button onclick="skip()">Skip</button>
+  <p id="feedback"></p>
+</div>
+
+<!-- END SCREEN -->
+<div id="endScreen" style="display:none;">
+  <h2 id="headline"></h2>
+  <p id="finalScore"></p>
+  <button onclick="startRound()">Play another round</button>
+</div>
+
+<script>
+/* ===============================
+   CONFIG
+   =============================== */
+
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv";
+
+const FACES_PER_ROUND = 20;
+
+/* ===============================
+   STATE
+   =============================== */
+
+let allCelebrities = [];
+let round = [];
+let index = 0;
+let score = 0;
+
+/* ===============================
+   CSV LOADING
+   =============================== */
+
+fetch(CSV_URL)
+  .then(res => res.text())
+  .then(csv => {
+    allCelebrities = parseCSV(csv);
+  });
+
+function parseCSV(csv) {
+  const lines = csv.split("\n");
+  const headers = lines[0].split(",").map(h => h.trim());
+
+  return lines.slice(1).map(line => {
+    const values = line.split(",");
+    let obj = {};
+    headers.forEach((h, i) => {
+      obj[h] = (values[i] || "").trim();
+    });
+    return {
+      name: obj.full_name,
+      image: obj.image_url,
+      confidence: Number(obj.confidence_level)
+    };
+  }).filter(c => c.name && c.image);
+}
+
+/* ===============================
+   ROUND COMPOSITION
+   =============================== */
+
+function buildRound() {
+  const anchors = allCelebrities.filter(c => c.confidence === 5);
+  const traps = allCelebrities.filter(c => c.confidence === 4);
+  const pressure = allCelebrities.filter(c => c.confidence <= 3);
+
+  return [
+    ...pickRandom(anchors, 6),
+    ...pickRandom(traps, 8),
+    ...pickRandom(pressure, 6)
+  ].sort(() => Math.random() - 0.5);
+}
+
+function pickRandom(arr, n) {
+  return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+}
+
+/* ===============================
+   GAME FLOW
+   =============================== */
+
+function startRound() {
+  score = 0;
+  index = 0;
+  round = buildRound();
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("endScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+
+  showFace();
+}
+
+function showFace() {
+  document.getElementById("progress").innerText =
+    `Face ${index + 1} of ${FACES_PER_ROUND} | Score: ${score}`;
+
+  document.getElementById("celebrityImage").src = round[index].image;
+  document.getElementById("guessInput").value = "";
+  document.getElementById("guessInput").disabled = false;
+  document.getElementById("feedback").innerText = "";
+}
+
+function submitGuess() {
+  const input = document.getElementById("guessInput");
+  const guess = input.value.trim().toLowerCase();
+  const correct = round[index].name.toLowerCase();
+
+  input.disabled = true;
+
+  if (guess === correct) {
+    score += 10;
+    document.getElementById("feedback").innerText = "Correct! +10 points";
+  } else {
+    document.getElementById("feedback").innerText =
+      `Incorrect. Correct answer: ${round[index].name}`;
+  }
+
+  setTimeout(nextFace, 1200);
+}
+
+function skip() {
+  nextFace();
+}
+
+function nextFace() {
+  index++;
+  if (index < FACES_PER_ROUND) {
+    showFace();
+  } else {
+    endRound();
+  }
+}
+
+function endRound() {
+  document.getElementById("gameScreen").style.display = "none";
+  document.getElementById("endScreen").style.display = "block";
+
+  document.getElementById("finalScore").innerText =
+    `Your score: ${score} / ${FACES_PER_ROUND * 10}`;
+
+  let headline = "That was tougher than it looked.";
+  if (score >= 160) headline = "You really know your pop culture.";
+  else if (score >= 120) headline = "Solid — but you left points on the table.";
+  else if (score >= 80) headline = "You know the faces. The names are harder.";
+  else if (score <= 30) headline = "Brutal round. Want another shot?";
+
+  document.getElementById("headline").innerText = headline;
+}
+</script>
+
+</body>
+</html>
