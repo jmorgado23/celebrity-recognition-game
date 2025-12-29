@@ -388,10 +388,30 @@ function endRound() {
     score >= 80  ? "You know the faces. The names are harder." :
                    "Brutal round. Want another shot?";
 }
+
+function shareScore() {
+  const text = `I scored ${score} / ${TOTAL*10} on Celebrity Recognition Game. Can you beat me?`;
+  const url = "https://celebrityrecognitiongame.com";
+
+  if (navigator.share) {
+    navigator.share({
+      title: "Celebrity Recognition Game",
+      text: text,
+      url: url
+    });
+  } else {
+    navigator.clipboard.writeText(`${text} ${url}`).then(() => {
+      alert("Link copied! Share it with friends 🙂");
+    });
+  }
+
+  gtag('event', 'share_score');
+}  
 </script>
 
 </body>
 </html>
+
 
 
 
