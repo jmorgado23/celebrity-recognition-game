@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Celebrity Recognition</title>
+<style>
+body { font-family: Arial, sans-serif; text-align:center; padding:20px; }
+img { max-width:90%; max-height:60vh; margin:20px 0; }
+input, button { font-size:18px; padding:10px; margin:5px; }
+.small { color:#666; }
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+  <h1>Recognize the Celebrity</h1>
+  <p>You’ll see 20 faces. Name as many celebrities as you can.</p>
+  <button onclick="startRound()">Start round</button>
+</div>
+
+<div id="gameScreen" style="display:none;">
+  <div id="progress"></div>
+  <img id="celebrityImage">
+  <p id="imageStatus" class="small"></p>
+  <input id="guessInput" placeholder="Who is this?" autocomplete="off">
+  <br>
+  <button onclick="submitGuess()">Submit</button>
+  <button onclick="skip()">Skip</button>
+  <p id="feedback"></p>
+</div>
+
+<div id="endScreen" style="display:none;">
+  <h2 id="headline"></h2>
+  <p id="finalScore"></p>
+  <button onclick="startRound()">Play again</button>
+</div>
+
+<script>
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv";
+const TOTAL = 20;
+
+let all = [], round = [], idx = 0, score = 0;
+const cache = {};
+
+fetch(CSV_URL)
+  .then(r => r.text())
+  .then(t => all = parseCSV(t));
+
+function parseCSV(csv) {
+  const rows = [], cur = [];
+  let val = "", q = false;
+
+  for (let c of csv) {
+    if (c === '"') q = !q;
+    else if (c === ',' && !q) { cur.push(val); val = ""; }
+    else if ((c === '\n' || c === '\r') && !q) {
+      if (val || cur.length) {
+        cur.push(val);
+        rows.push([...cur]);
+        cur.length = 0;
+        val = "";
+      }
+    } else val += c;
+  }
+  if (val || cur.length) {
+    cur.push(val);
+    rows.push(cur);
+  }
+
+  const headers = rows.shift().map(x => x.trim());
+
+  return rows.map(r => {
+    let o = {};
+    headers.forEach((k, i) => o[k] = (r[i] || "").trim());
+    return {
+      name: o.full_name,
+      conf: Number(o.confidence_level)
+    };
+  }).filter(x => x.name);
+}
+
+function buildRound() {
+  const a = all.filter(x => x.conf === 5);
+  const t = all.filter(x => x.conf === 4);
+  const p = all.filter(x => x.conf <= 3);
+  return [...pick(a,6), ...pick(t,8), ...pick(p,6)].sort(() => Math.random() - 0.5);
+}
+
+const pick = (arr, n) =>
+  [...arr].sort(() => Math.random() - 0.5).slice(0, n);
+
+function startRound() {
+  round = buildRound();
+  idx = 0;
+  score = 0;
+
+  startScreen.style.display = "none";
+  endScreen.style.display = "none";
+  gameScreen.style.display = "block";
+
+  showFace();
+}
+
+function showFace() {
+  if (!round[idx]) return;
+
+  progress.innerText = `Face ${idx + 1} of ${TOTAL} | Score: ${score}`;
+  guessInput.value = "";
+  feedback.innerText = "";
+
+  loadImage(round[idx].name);
+}
+
+function loadImage(name) {
+  imageStatus.innerText = "Loading image…";
+
+  if (cache[name]) {
+    celebrityImage.src = cache[name];
+    imageStatus.innerText = "";
+    return;
+  }
+
+  fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.thumbnail && d.thumbnail.source) {
+        cache[name] = d.thumbnail.source;
+        celebrityImage.src = d.thumbnail.source;
+        imageStatus.innerText = "";
+      } else {
+        celebrityImage.src = "";
+        imageStatus.innerText = "Image not available";
+      }
+    })
+    .catch(() => {
+      celebrityImage.src = "";
+      imageStatus.innerText = "Image not available";
+    });
+}
+
+function submitGuess() {
+  const g = guessInput.value.trim().toLowerCase();
+  const c = round[idx].name.toLowerCase();
+
+  if (g === c) {
+    score += 10;
+    feedback.innerText = "Correct! +10 points";
+  } else {
+    feedback.innerText = `Incorrect. Correct answer: ${round[idx].name}`;
+  }
+
+  setTimeout(nextFace, 1200);
+}
+
+function skip() {
+  feedback.innerText = `Incorrect. Correct answer: ${round[idx].name}`;
+  setTimeout(nextFace, 1200);
+}
+
+function nextFace() {
+  idx++;
+  if (idx < TOTAL) showFace();
+  else endRound();
+}
+
+function endRound() {
+  gameScreen.style.display = "none";
+  endScreen.style.display = "block";
+
+  finalScore.innerText = `Your score: ${score} / ${TOTAL * 10}`;
+
+  headline.innerText =
+    score >= 160 ? "You really know your pop culture." :
+    score >= 120 ? "Solid — but you left points on the table." :
+    score >= 80  ? "You know the faces. The names are harder." :
+                   "Brutal round. Want another shot?";
+}
+</script>
+
+</body>
+</html>
