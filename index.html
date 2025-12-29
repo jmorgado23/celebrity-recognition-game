@@ -225,7 +225,7 @@ button {
 
   <!-- START -->
   <div id="startScreen">
-    <h1>Celebrity Recognition Game</h1>
+    <h1 id="siteTitle"></h1>
     <p>Test how well you recognize famous people.</p>
     <button class="primary" onclick="startRound()">Start round</button>
     <p class="small">Exact spelling · One attempt per face</p>
@@ -275,10 +275,14 @@ button {
 <footer class="site-footer">
   <a href="/privacy.html">Privacy Policy</a>
 </footer>
-  
+
+<script src="config.js"></script>
+
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv";
-const TOTAL = 20;
+const CSV_URL = CONFIG.datasetUrl;
+const TOTAL = CONFIG.totalPerRound;
+
+document.getElementById("siteTitle").innerText = CONFIG.title;
 
 let all = [], round = [], idx = 0, score = 0;
 const cache = {};
@@ -353,7 +357,7 @@ function submitGuess() {
   const g = guessInput.value.trim().toLowerCase();
   const c = round[idx].name.toLowerCase();
   if (g === c) {
-    score += 10;
+    score += CONFIG.pointsPerCorrect;
     feedback.innerText = "Correct! +10 points";
     feedback.className = "correct";
     gtag('event','submit_correct');
@@ -390,7 +394,9 @@ function endRound() {
 }
 
 function shareScore() {
-  const text = `I scored ${score} / ${TOTAL*10} on Celebrity Recognition Game. Can you beat me?`;
+  const text = CONFIG.shareTemplate
+    .replace("{score}", score)
+    .replace("{max}", TOTAL * CONFIG.pointsPerCorrect);
   const url = "https://celebrityrecognitiongame.com";
 
   if (navigator.share) {
@@ -411,6 +417,7 @@ function shareScore() {
 
 </body>
 </html>
+
 
 
 
