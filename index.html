@@ -73,7 +73,6 @@ body {
 h1 {
   font-size: 30px;
   margin: 6px 0 10px;
-  color: var(--text-main);
 }
 
 h2 {
@@ -106,9 +105,6 @@ p {
   border-radius: 18px;
   background: #f3f4fa;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   margin: 18px 0;
 }
 
@@ -124,12 +120,7 @@ input {
   font-size: 18px;
   border-radius: 14px;
   border: 2px solid #e2e5f1;
-  outline: none;
   margin-top: 8px;
-}
-
-input:focus {
-  border-color: var(--primary);
 }
 
 .buttons {
@@ -148,23 +139,8 @@ button {
   cursor: pointer;
 }
 
-.primary {
-  background: var(--primary);
-  color: white;
-}
-
-.primary:hover {
-  background: var(--primary-dark);
-}
-
-.secondary {
-  background: var(--secondary);
-  color: #333;
-}
-
-.secondary:hover {
-  background: #e3e6f2;
-}
+.primary { background: var(--primary); color: white; }
+.secondary { background: var(--secondary); color: #333; }
 
 #feedback {
   margin-top: 14px;
@@ -174,6 +150,23 @@ button {
 
 .correct { color: var(--success); }
 .incorrect { color: var(--error); }
+
+/* ---------- AD PREP ---------- */
+.ad-container {
+  margin: 18px 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #f5f6fb;
+  font-size: 14px;
+  color: #888;
+}
+
+.ad-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
 </style>
 </head>
 
@@ -181,23 +174,18 @@ button {
 
 <div class="app">
 
-  <!-- START -->
   <div id="startScreen">
     <h1>Celebrity Recognition Game</h1>
     <p>Test how well you recognize famous people.</p>
     <button class="primary" onclick="startRound()">Start round</button>
-    <p class="small">Exact spelling · One attempt per face</p>
   </div>
 
-  <!-- GAME -->
   <div id="gameScreen" class="hidden">
     <div id="progress"></div>
 
     <div class="image-wrapper">
       <img id="celebrityImage" alt="Celebrity face">
     </div>
-
-    <p id="imageStatus" class="small"></p>
 
     <input id="guessInput" placeholder="Who is this?" autocomplete="off">
 
@@ -209,15 +197,20 @@ button {
     <p id="feedback"></p>
   </div>
 
-  <!-- END -->
   <div id="endScreen" class="hidden">
     <h2 id="headline"></h2>
     <p id="finalScore"></p>
+
+    <!-- AD SLOT (EMPTY FOR NOW) -->
+    <div class="ad-container">
+      <div class="ad-label">Advertisement</div>
+      <div id="ad-slot">Ad space</div>
+    </div>
+
     <button class="primary" onclick="startRound()">Play again</button>
   </div>
 
 </div>
-
 <script>
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv";
 const TOTAL = 20;
@@ -334,4 +327,5 @@ function endRound() {
 
 </body>
 </html>
+
 
