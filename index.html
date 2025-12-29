@@ -1,43 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Celebrity Recognition</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #fafafa;
-      text-align: center;
-      padding: 20px;
-    }
-    img {
-      max-width: 90%;
-      max-height: 60vh;
-      margin: 20px 0;
-    }
-    input {
-      font-size: 18px;
-      padding: 10px;
-      width: 80%;
-      max-width: 400px;
-    }
-    button {
-      font-size: 18px;
-      padding: 10px 20px;
-      margin: 10px;
-      cursor: pointer;
-    }
-    .small {
-      color: #666;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Celebrity Recognition</title>
+<style>
+body { font-family: Arial, sans-serif; text-align:center; padding:20px; }
+img { max-width:90%; max-height:60vh; margin:20px 0; }
+input, button { font-size:18px; padding:10px; margin:5px; }
+.small { color:#666; }
+</style>
 </head>
 <body>
 
 <div id="startScreen">
   <h1>Recognize the Celebrity</h1>
-  <p>You’ll see 20 faces. Name as many celebrities as you can.</p>
   <button onclick="startRound()">Start round</button>
 </div>
 
@@ -55,161 +31,83 @@
 <div id="endScreen" style="display:none;">
   <h2 id="headline"></h2>
   <p id="finalScore"></p>
-  <button onclick="startRound()">Play another round</button>
+  <button onclick="startRound()">Play again</button>
 </div>
 
 <script>
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv";
+const TOTAL = 20;
 
-const FACES_PER_ROUND = 20;
-let allCelebrities = [];
-let round = [];
-let index = 0;
-let score = 0;
-const imageCache = {};
+let all=[], round=[], idx=0, score=0;
+const cache={};
 
-// ---------- ROBUST CSV PARSER ----------
-function parseCSV(csv) {
-  const rows = [];
-  let row = [];
-  let value = "";
-  let inQuotes = false;
+fetch(CSV_URL).then(r=>r.text()).then(t=>all=parseCSV(t));
 
-  for (let char of csv) {
-    if (char === '"') inQuotes = !inQuotes;
-    else if (char === "," && !inQuotes) {
-      row.push(value);
-      value = "";
-    } else if (char === "\n" && !inQuotes) {
-      row.push(value);
-      rows.push(row);
-      row = [];
-      value = "";
-    } else value += char;
+function parseCSV(csv){
+  const rows=[], cur=[]; let val="", q=false;
+  for(let c of csv){
+    if(c=='"') q=!q;
+    else if(c==','&&!q){cur.push(val);val="";}
+    else if((c=='\n'||c=='\r')&&!q){ if(val||cur.length){cur.push(val);rows.push([...cur]);cur.length=0;val="";}}
+    else val+=c;
   }
-  row.push(value);
-  rows.push(row);
-
-  const headers = rows.shift().map(h => h.trim());
-
-  return rows.map(r => {
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = (r[i] || "").trim());
-    return {
-      name: obj.full_name,
-      confidence: Number(obj.confidence_level)
-    };
-  }).filter(c => c.name);
+  if(val||cur.length){cur.push(val);rows.push(cur);}
+  const h=rows.shift().map(x=>x.trim());
+  return rows.map(r=>{
+    let o={}; h.forEach((k,i)=>o[k]=(r[i]||"").trim());
+    return {name:o.full_name, conf:Number(o.confidence_level)};
+  }).filter(x=>x.name);
 }
 
-// ---------- LOAD DATA ----------
-fetch(CSV_URL)
-  .then(res => res.text())
-  .then(csv => {
-    allCelebrities = parseCSV(csv);
-  });
-
-// ---------- ROUND BUILD ----------
-function buildRound() {
-  const anchors = allCelebrities.filter(c => c.confidence === 5);
-  const traps = allCelebrities.filter(c => c.confidence === 4);
-  const pressure = allCelebrities.filter(c => c.confidence <= 3);
-
-  return [
-    ...pickRandom(anchors, 6),
-    ...pickRandom(traps, 8),
-    ...pickRandom(pressure, 6)
-  ].sort(() => Math.random() - 0.5);
+function buildRound(){
+  const a=all.filter(x=>x.conf===5),
+        t=all.filter(x=>x.conf===4),
+        p=all.filter(x=>x.conf<=3);
+  return [...pick(a,6),...pick(t,8),...pick(p,6)].sort(()=>Math.random()-0.5);
 }
+const pick=(a,n)=>[...a].sort(()=>Math.random()-0.5).slice(0,n);
 
-function pickRandom(arr, n) {
-  return [...arr].sort(() => Math.random() - 0.5).slice(0, n);
-}
-
-// ---------- GAME FLOW ----------
-function startRound() {
-  score = 0;
-  index = 0;
-  round = buildRound();
-
-  startScreen.style.display = "none";
-  endScreen.style.display = "none";
-  gameScreen.style.display = "block";
-
+function startRound(){
+  round=buildRound(); idx=0; score=0;
+  startScreen.style.display="none";
+  endScreen.style.display="none";
+  gameScreen.style.display="block";
   showFace();
 }
 
-function showFace() {
-  progress.innerText = `Face ${index + 1} of ${FACES_PER_ROUND} | Score: ${score}`;
-  guessInput.value = "";
-  feedback.innerText = "";
-  loadWikipediaImage(round[index].name);
+function showFace(){
+  if(!round[idx]) return;
+  progress.innerText=`Face ${idx+1} of ${TOTAL} | Score: ${score}`;
+  guessInput.value=""; feedback.innerText="";
+  loadImage(round[idx].name);
 }
 
-function loadWikipediaImage(name) {
-  imageStatus.innerText = "Loading image…";
-
-  if (imageCache[name]) {
-    celebrityImage.src = imageCache[name];
-    imageStatus.innerText = "";
-    return;
-  }
-
+function loadImage(name){
+  imageStatus.innerText="Loading image…";
+  if(cache[name]){celebrityImage.src=cache[name];imageStatus.innerText="";return;}
   fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.thumbnail?.source) {
-        imageCache[name] = data.thumbnail.source;
-        celebrityImage.src = data.thumbnail.source;
-        imageStatus.innerText = "";
-      } else {
-        imageStatus.innerText = "Image not available";
-        celebrityImage.src = "";
-      }
-    })
-    .catch(() => {
-      imageStatus.innerText = "Image not available";
-      celebrityImage.src = "";
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.thumbnail?.source){cache[name]=d.thumbnail.source;celebrityImage.src=d.thumbnail.source;imageStatus.innerText="";}
+      else{celebrityImage.src="";imageStatus.innerText="Image not available";}
     });
 }
 
-function submitGuess() {
-  const guess = guessInput.value.trim().toLowerCase();
-  const correct = round[index].name.toLowerCase();
-
-  if (guess === correct) {
-    score += 10;
-    feedback.innerText = "Correct! +10 points";
-  } else {
-    feedback.innerText = `Incorrect. Correct answer: ${round[index].name}`;
-  }
-
-  setTimeout(nextFace, 1200);
+function submitGuess(){
+  const g=guessInput.value.trim().toLowerCase();
+  const c=round[idx].name.toLowerCase();
+  feedback.innerText=g===c?(score+=10,"Correct! +10"):`Incorrect. ${round[idx].name}`;
+  setTimeout(nextFace,1200);
 }
+function skip(){nextFace();}
+function nextFace(){ idx++; idx<TOTAL?showFace():endRound(); }
 
-function skip() {
-  nextFace();
-}
-
-function nextFace() {
-  index++;
-  if (index < FACES_PER_ROUND) showFace();
-  else endRound();
-}
-
-function endRound() {
-  gameScreen.style.display = "none";
-  endScreen.style.display = "block";
-  finalScore.innerText = `Your score: ${score} / ${FACES_PER_ROUND * 10}`;
-
-  headline.innerText =
-    score >= 160 ? "You really know your pop culture." :
-    score >= 120 ? "Solid — but you left points on the table." :
-    score >= 80 ? "You know the faces. The names are harder." :
-    "Brutal round. Want another shot?";
+function endRound(){
+  gameScreen.style.display="none";
+  endScreen.style.display="block";
+  finalScore.innerText=`Your score: ${score} / ${TOTAL*10}`;
+  headline.innerText=score>=160?"You really know pop culture.":score>=120?"Solid effort.":"Want another try?";
 }
 </script>
-
 </body>
 </html>
