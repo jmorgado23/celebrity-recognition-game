@@ -22,5 +22,13 @@ window.CONFIG = {
     { min: 120, text: "Solid — but you left points on the table." },
     { min: 80,  text: "You know the faces. The names are harder." },
     { min: 0,   text: "Brutal round. Want another shot?" }
-  ]
+  ],
+  relatedGames: [
+    { name: "NBA", url: "https://nbarecognitiongame.com" },
+    { name: "NFL", url: "https://nflrecognitiongame.com" },
+    { name: "Soccer", url: "https://soccerrecognitiongame.com" },
+    { name: "UFC", url: "https://ufcrecognitiongame.com" },
+    { name: "Celebrity", url: "https://celebrityrecognitiongame.com" }
+  ],
+  
 };
