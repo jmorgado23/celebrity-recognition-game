@@ -9,7 +9,7 @@ window.CONFIG = {
   datasetUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS52keBl1q6F8AVumY7iwghhuYyxm5n9XJdyHFVlBIdWTp4hN-IPvwseIo5cjJO_iUzJp7H6EQMIT6E/pub?output=csv",
 
   totalPerRound: 20,
-  pointsPerCorrect: 10,
+  pointsPerCorrect: 1,
 
   itemLabel: "Face",
 
