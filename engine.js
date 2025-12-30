@@ -62,6 +62,14 @@ function showFace() {
   guessInput.value = "";
   feedback.innerText = "";
   feedback.className = "";
+
+  // 🔒 HARD SAFETY: never allow a face to block the game
+  setTimeout(() => {
+    if (!celebrityImage.src || celebrityImage.naturalWidth === 0) {
+      nextFace();
+    }
+  }, 5000);
+  
   loadImage(round[idx].name);
 }
 
