@@ -87,10 +87,21 @@ function loadImage(name) {
 
     img.onload = () => {
       if (finished) return;
-      finished = true;
-      clearTimeout(timeout);
+
       celebrityImage.src = url;
-      imageStatus.innerText = "";
+
+      // 🔒 FINAL SAFETY CHECK (critical)
+      setTimeout(() => {
+        if (finished) return;
+
+        if (celebrityImage.naturalWidth === 0) {
+          failAndSkip("Image failed to render. Skipping…");
+        } else {
+          finished = true;
+          clearTimeout(timeout);
+          imageStatus.innerText = "";
+        }
+      }, 50);
     };
 
     img.onerror = () => {
